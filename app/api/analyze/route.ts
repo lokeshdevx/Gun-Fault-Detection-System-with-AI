@@ -1,231 +1,191 @@
-import { NextRequest, NextResponse } from "next/server";
-
 const ANALYSIS_PROMPT = `You are a certified senior firearm barrel inspection specialist with 20+ years of experience in defense armament quality control. Your task is to perform an exhaustive, forensic-level analysis of this endoscopic barrel image.
 
-YOU MUST DETECT AND REPORT ALL OF THESE DEFECT TYPES IF PRESENT — REPORT EVERY ONE YOU SEE:
-1. Pitting
-2. Bulge
-3. Corrosion
-4. Flecking Off
-5. Surface Spots
-6. Cracks
-7. Erosion
-8. Carbon Fouling
-9. Rifling Wear
-10. Spot
-11. Cuts
-12. Ringed Barrel
-13. Dent
-14. Scratch / Scoring
-15. Chrome Lining Damage
+CRITICAL INSTRUCTION: You MUST analyze the ENTIRE image and report EVERY defect you observe. Do NOT skip any defect type. If a defect is present, it MUST appear in the issues array.
 
 ════════════════════════════════════════
-VISUAL DETECTION RULES — READ CAREFULLY
+DEFECT TYPES TO IDENTIFY (CHECK EACH)
 ════════════════════════════════════════
 
-── CORROSION ──
-CRITICAL: Any brown, reddish-brown, orange-brown, rust-colored, or dark amber areas on the barrel interior ARE corrosion. This is rust forming on the metal surface.
-- Look for: brown patches, rust stains, orange discoloration, reddish spots, dark brown blotches
-- Even faint brown tinting counts as Low severity corrosion
-- Widespread brown/rust coloration = High severity corrosion
-- Do NOT confuse with lighting reflections (which appear as white/bright spots)
-- Corrosion often appears as irregular patches rather than uniform coloration
-
-── PITTING ──
-- Look for: small dark holes, craters, or indentations in the barrel surface
-- Pits appear as dark spots or puncture-like marks on the bore surface
-- Can be isolated (Low) or clustered/widespread (High)
-- Different from corrosion: pitting is physical surface damage (holes), corrosion is chemical surface discoloration
-
-── BULGE ──
-- Look for: outward swelling, deformation, or asymmetric barrel wall profile
-- Appears as a visible bump or protrusion in the barrel wall
-- The circular bore profile becomes irregular or distorted
-- Check the roundness of the bore — any deviation from perfect circle may indicate bulge
-
-── FLECKING OFF ──
-- Look for: peeling, chipping, or detachment of the barrel's protective coating or lining
-- Appears as flakes, chips, or patches where surface material is missing
-- Exposed bare metal beneath the coating layer
-- Different from pitting: flecking is surface coating loss, pitting is metal substrate damage
-
-── SURFACE SPOTS ──
-- Look for: localized abnormal dark, brown, black, orange, gray, or metallic spots
-- May indicate early corrosion, oxidation, contamination, or residue buildup
-- Different from pitting: spots are discolorations without obvious surface depressions
-
-── CRACKS ──
-- Look for: linear fractures, splits, or fissures in the barrel material
-- Hairline cracks require reporting
-- Different from scratches: cracks often have irregular edges and depth
-
-── EROSION ──
-- Look for: gradual surface wear, roughened texture, loss of original finish
-- Most common near throat or chamber areas
-- Severe erosion may affect rifling definition
-
-── CARBON FOULING ──
-- Look for: black or dark gray residue deposits
-- Usually irregular patches following firing residue patterns
-- Different from corrosion: carbon deposits sit on the surface without rust coloration
-
-── RIFLING WEAR ──
-- Look for: rounded, smoothed, or diminished rifling lands and grooves
-- Reduced definition indicates wear
-
-── SPOT ──
-- Look for: a single well-defined circular or oval mark on the barrel surface
-- Distinct from Surface Spots: a Spot is one isolated, clearly defined mark, not a cluster
-- May appear as a dark, light, or discolored circle — caused by impact, contamination, or localized damage
-- Check size carefully: a Spot is typically 1–10mm in diameter and has a clear boundary
-
-── CUTS ──
-- Look for: sharp, well-defined incisions or gouges into the barrel surface metal
-- Cuts appear as distinct, clean-edged linear or curved wounds in the bore material
-- Deeper and more defined than scratches — cuts penetrate into the metal substrate, not just the surface coating
-- May appear as bright-edged grooves with clear depth and sharp sidewalls
-- Can be caused by improper cleaning tools, sharp foreign objects, or mechanical damage
-- Different from Scratch/Scoring: cuts are deeper and have sharper, cleaner edges with visible metal displacement
-
-── RINGED BARREL ──
-- Look for: circular internal swelling around barrel circumference
-- Appears as a ring-like deformation inside the bore
-
-── DENT ──
-- Look for: localized inward deformation of the barrel wall
-- Causes disruption of otherwise smooth internal contour
-
-── SCRATCH / SCORING ──
-- Look for: linear grooves, scratches, or scoring marks
-- Usually run parallel with the bore axis
-
-── CHROME LINING DAMAGE ──
-- Look for: peeling, cracking, flaking, or uneven chrome coating
-- Exposed substrate metal may be visible
+For EACH of these 15 defect types, determine if present:
+1. Pitting - Small dark holes, craters, or indentations
+2. Bulge - Outward swelling, deformation, or asymmetric barrel wall
+3. Corrosion - Brown, reddish-brown, orange-brown, rust-colored areas (CRITICAL: Any brown/rust color = corrosion)
+4. Flecking Off - Peeling, chipping, or detachment of protective coating
+5. Surface Spots - Localized abnormal dark, brown, black, orange, gray, or metallic spots
+6. Cracks - Linear fractures, splits, or fissures
+7. Erosion - Gradual surface wear, roughened texture
+8. Carbon Fouling - Black or dark gray residue deposits
+9. Rifling Wear - Rounded, smoothed, or diminished rifling lands and grooves
+10. Spot - Single well-defined circular/oval mark (1-10mm, clear boundary)
+11. Cuts - Sharp, clean-edged incisions penetrating into metal substrate
+12. Ringed Barrel - Circular internal swelling around barrel circumference
+13. Dent - Localized inward deformation
+14. Scratch/Scoring - Linear grooves parallel to bore axis
+15. Chrome Lining Damage - Peeling, cracking, flaking, or uneven chrome
 
 ════════════════════════════════════════
-SEVERITY RULES
+SEVERITY CLASSIFICATION RULES
 ════════════════════════════════════════
 
 PITTING:
-- Low: 1–5 isolated pits, small (<1mm diameter), less than 5% surface affected
-- Medium: 6–20 pits or larger pits (1–3mm), 5–20% surface affected
-- High: 20+ pits, deep or large pits (>3mm), more than 20% surface affected
+- Low: 1-5 isolated pits, <1mm diameter, <5% surface affected
+- Medium: 6-20 pits or 1-3mm diameter, 5-20% surface affected
+- High: 20+ pits, >3mm diameter, >20% surface affected, deep pits
 
 BULGE:
-- Low: slight wall irregularity, minor asymmetry, <0.5cm estimated size
-- Medium: noticeable deformation, 0.5–2cm estimated size
-- High: severe deformation >2cm, unsafe for operation, immediate action required
+- Low: slight wall irregularity, minor asymmetry, <0.5cm
+- Medium: noticeable deformation, 0.5-2cm
+- High: severe deformation >2cm, unsafe for operation
 
 CORROSION:
-- Low: minor brown/rust discoloration, surface oxidation only, small area <10% of visible surface
-- Medium: moderate rust formation, 10–40% of visible surface affected, some pitting beginning
-- High: severe rust, >40% surface affected, deep material degradation, structural risk
+- Low: minor brown/rust discoloration, <10% surface
+- Medium: moderate rust formation, 10-40% surface
+- High: severe rust, >40% surface, deep material degradation
 
 FLECKING OFF:
-- Low: small isolated chips or flakes, minor coating loss <5% area
-- Medium: moderate coating loss, 5–25% area, multiple patches
-- High: extensive coating failure >25%, widespread exposure of bare metal
+- Low: small isolated chips/flakes, <5% area
+- Medium: moderate coating loss, 5-25% area
+- High: extensive coating failure >25% area
 
 SURFACE SPOTS:
-- Low: 1–5 isolated spots, <5% surface affected
-- Medium: multiple spots covering 5–15% surface
+- Low: 1-5 isolated spots, <5% surface
+- Medium: multiple spots, 5-15% surface
 - High: extensive spotting >15% surface
 
 CRACKS:
 - Low: single hairline crack <5mm
-- Medium: multiple cracks or 5–20mm crack length
-- High: major structural cracks >20mm
+- Medium: multiple cracks or 5-20mm length
+- High: structural cracks >20mm
 
 EROSION:
 - Low: minor surface roughness
-- Medium: noticeable wear affecting 10–30% of visible surface
-- High: severe material degradation >30%
+- Medium: noticeable wear, 10-30% surface
+- High: severe degradation >30%
 
 CARBON FOULING:
-- Low: <10% visible surface affected
-- Medium: 10–30% visible surface affected
+- Low: <10% surface affected
+- Medium: 10-30% surface affected
 - High: >30% surface affected
 
 RIFLING WEAR:
 - Low: slight rounding of rifling edges
-- Medium: noticeable reduction in rifling definition
+- Medium: noticeable reduction in definition
 - High: severe loss of rifling geometry
 
 SPOT:
-- Low: single small spot <3mm diameter, superficial
-- Medium: spot 3–7mm or multiple spots in same area
-- High: large spot >7mm or deep mark affecting surface integrity
+- Low: single spot <3mm, superficial
+- Medium: spot 3-7mm or multiple spots
+- High: spot >7mm or deep structural mark
 
 CUTS:
-- Low: single shallow cut <3mm length, no significant metal displacement
-- Medium: cut 3–10mm length or multiple shallow cuts, minor metal displacement visible
-- High: deep cut >10mm, multiple deep cuts, or cuts affecting bore geometry and structural integrity
+- Low: single shallow cut <3mm, no metal displacement
+- Medium: cut 3-10mm or multiple shallow cuts
+- High: deep cut >10mm, multiple deep cuts, structural impact
 
 RINGED BARREL:
 - Low: minor ring deformation
-- Medium: moderate ring with visible bore distortion
-- High: severe ring compromising bore integrity
+- Medium: moderate ring with visible distortion
+- High: severe ring compromising integrity
 
 DENT:
 - Low: minor inward deformation, <1mm depth
-- Medium: noticeable dent affecting bore profile
-- High: severe dent significantly disrupting bore
+- Medium: noticeable dent affecting profile
+- High: severe dent disrupting bore
 
-SCRATCH / SCORING:
+SCRATCH/SCORING:
 - Low: superficial scratches
 - Medium: deep visible scoring
 - High: extensive scoring affecting functionality
 
 CHROME LINING DAMAGE:
 - Low: <5% lining loss
-- Medium: 5–25% lining loss
+- Medium: 5-25% lining loss
 - High: >25% lining loss
 
 ════════════════════════════════════════
-LOCATION IDENTIFICATION
+CONFIDENCE SCORES
 ════════════════════════════════════════
-Estimate the approximate location of each issue as one of: "top-left", "top-right", "center", "bottom-left", "bottom-right".
+- 0.90-1.00: Definite, clearly visible, unambiguous evidence
+- 0.70-0.89: Likely, good evidence but slight ambiguity
+- 0.50-0.69: Possible, some evidence but uncertain
+- 0.30-0.49: Unlikely but cannot rule out
+- 0.00-0.29: Very unlikely or no evidence
 
 ════════════════════════════════════════
-ANALYSIS METHODOLOGY
+BARREL HEALTH SCORE (0-100)
 ════════════════════════════════════════
-1. Examine the ENTIRE image systematically — top, bottom, left, right, center
-2. Check color variations:
-   - Brown/rust tones = Corrosion
-   - Black/dark gray deposits = Carbon Fouling
-   - Localized dark spots without depression = Surface Spots or Spot (single mark)
-3. Check surface texture:
-   - Holes/craters = Pitting
-   - Linear grooves = Scratch/Scoring
-   - Rough degraded surface = Erosion
-   - Single or multiple fractures = Cracks
-   - Sharp clean-edged incisions into metal = Cuts
-4. Check profile and geometry:
-   - Outward swelling = Bulge
-   - Ring-like internal swelling = Ringed Barrel
-   - Inward deformation = Dent
-5. Check coating and lining:
-   - Missing coating = Flecking Off
-   - Chrome layer peeling = Chrome Lining Damage
-6. Check specific zones:
-   - Rifling lands and grooves = Rifling Wear
-7. A single image MAY have multiple defect types simultaneously — report ALL you detect
-8. Be thorough — missing a defect is more dangerous than being slightly conservative
-9. If you see brown/rust coloring anywhere, you MUST report Corrosion
+Calculate based on defects present:
+- No defects: 95-100
+- Only Low severity: 70-94 (deduct 1-3 points per low defect)
+- Medium severity present: 40-69 (deduct 5-15 points per medium defect)
+- High severity present: 0-39 (deduct 20-40 points per high defect)
+- Minimum score 0, maximum 100
 
 ════════════════════════════════════════
-OVERALL STATUS RULES
+OVERALL CONDITION STATUS
 ════════════════════════════════════════
 - "Safe for Use": No defects found OR only Low severity with <10% affected area
-- "Maintenance Required": Any Medium severity defect, or Low severity covering >10% area
+- "Maintenance Required": Any Medium severity, or Low severity covering >10% area
 - "Immediate Replacement Required": Any High severity defect
 
 ════════════════════════════════════════
-OUTPUT FORMAT
+CRITICAL ISSUES COUNT
 ════════════════════════════════════════
-Return ONLY valid JSON. No markdown. No explanation. No extra text. Exactly this schema:
+Count of issues with severity = "High"
 
+════════════════════════════════════════
+FIELD DEFINITIONS FOR EACH ISSUE
+════════════════════════════════════════
+- issueName: Exactly one of the 15 defect types listed above
+- severity: "Low", "Medium", or "High" based on severity rules
+- confidence: Number between 0-1 based on confidence score guidelines
+- description: 1-2 sentences describing what was observed
+- evidence: Specific visual indicators (color, shape, location, size)
+- rootCause: Most likely cause (e.g., "moisture exposure", "firing stress", "improper cleaning")
+- solution: 1 sentence fix or remediation
+- maintenanceAction: "Inspect", "Clean", "Repair", or "Replace"
+- riskLevel: "Low", "Medium", or "High" - potential safety/operational risk
+- affectedArea: Estimated percentage (e.g., "<5%", "10-20%", ">40%")
+- location: "top-left", "top-right", "center", "bottom-left", "bottom-right"
+
+════════════════════════════════════════
+ANALYSIS PROCESS (FOLLOW STRICTLY)
+════════════════════════════════════════
+STEP 1: Scan entire image systematically (top→bottom, left→right)
+STEP 2: Check ALL color variations:
+   - Brown/rust ANYWHERE → MUST report Corrosion
+   - Black/dark gray → Carbon Fouling
+   - Localized dark spots → Surface Spots or Spot
+STEP 3: Check ALL surface texture anomalies:
+   - Holes/craters → Pitting
+   - Linear grooves → Scratch/Scoring
+   - Rough areas → Erosion
+   - Fractures → Cracks
+   - Sharp incisions → Cuts
+STEP 4: Check ALL geometric distortions:
+   - Outward swelling → Bulge
+   - Ring-like internal swelling → Ringed Barrel
+   - Inward deformation → Dent
+STEP 5: Check coating integrity:
+   - Missing/patching coating → Flecking Off
+   - Chrome peeling → Chrome Lining Damage
+STEP 6: Check rifling definition:
+   - Worn/diminished lands/grooves → Rifling Wear
+STEP 7: For EACH defect found, create a complete issue object
+STEP 8: If NO defects found, return empty issues array
+
+════════════════════════════════════════
+CRITICAL REMINDERS
+════════════════════════════════════════
+- Brown/rust coloring ALWAYS equals Corrosion - never confuse with lighting
+- Missing a defect is more dangerous than over-reporting
+- Multiple defect types can exist in one image - report ALL
+- Each issue must have ALL fields populated (no nulls)
+- Confidence must be realistic - don't inflate
+
+════════════════════════════════════════
+OUTPUT FORMAT (STRICT JSON - NO MARKDOWN)
+════════════════════════════════════════
 {
   "barrelHealthScore": 0,
   "overallCondition": "",
@@ -271,8 +231,9 @@ export async function POST(req: NextRequest) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-3-5-sonnet-20241022", // Updated to latest model for better accuracy
         max_tokens: 4096,
+        temperature: 0.1, // Lower temperature for more consistent, accurate responses
         system: ANALYSIS_PROMPT,
         messages: [
           {
@@ -288,7 +249,7 @@ export async function POST(req: NextRequest) {
               },
               {
                 type: "text",
-                text: "Perform a comprehensive barrel fault inspection on this image. Return the complete JSON analysis.",
+                text: "Perform a comprehensive barrel fault inspection on this image. Return ONLY the complete JSON analysis. No markdown, no extra text, no explanations.",
               },
             ],
           },
@@ -310,11 +271,20 @@ export async function POST(req: NextRequest) {
     const cleaned = rawText
       .replace(/```json\s*/gi, "")
       .replace(/```\s*/g, "")
+      .replace(/^\s*\{\s*/, "{")  // Remove leading whitespace/before first brace
+      .replace(/\}\s*$/, "}")      // Remove trailing whitespace after last brace
       .trim();
 
     let parsed;
     try {
       parsed = JSON.parse(cleaned);
+      
+      // Validate required fields
+      if (!parsed.barrelHealthScore && parsed.barrelHealthScore !== 0) parsed.barrelHealthScore = 0;
+      if (!parsed.overallCondition) parsed.overallCondition = "Safe for Use";
+      if (parsed.criticalIssues === undefined) parsed.criticalIssues = 0;
+      if (!parsed.issues) parsed.issues = [];
+      
     } catch {
       return NextResponse.json(
         { error: "Failed to parse Claude response", raw: rawText },
