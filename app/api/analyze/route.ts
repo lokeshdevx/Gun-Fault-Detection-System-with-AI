@@ -11,16 +11,13 @@ YOU MUST DETECT AND REPORT ALL OF THESE DEFECT TYPES IF PRESENT — REPORT EVERY
 6. Cracks
 7. Erosion
 8. Carbon Fouling
-9. Carbon Deposit
-10. Lead Fouling
-11. Rifling Wear
-12. Spot
-13. Barrel Obstruction
-14. Ringed Barrel
-15. Dent
-16. Scratch / Scoring
-17. Chrome Lining Damage
-18. Chamber Damage
+9. Rifling Wear
+10. Spot
+11. Cuts
+12. Ringed Barrel
+13. Dent
+14. Scratch / Scoring
+15. Chrome Lining Damage
 
 ════════════════════════════════════════
 VISUAL DETECTION RULES — READ CAREFULLY
@@ -72,17 +69,6 @@ CRITICAL: Any brown, reddish-brown, orange-brown, rust-colored, or dark amber ar
 - Usually irregular patches following firing residue patterns
 - Different from corrosion: carbon deposits sit on the surface without rust coloration
 
-── CARBON DEPOSIT ──
-- Look for: thick, hardened black or dark gray carbon buildup layered on the barrel surface
-- Unlike Carbon Fouling (which is a residue film), Carbon Deposit is a dense, crusty, raised accumulation
-- Often appears as raised ridges or solid patches rather than thin film
-- Common near chamber throat; can affect bore dimensions if severe
-- Distinguished from Carbon Fouling by its thickness and structural presence on the surface
-
-── LEAD FOULING ──
-- Look for: dull gray or silver deposits attached to the barrel surface
-- Often appears smeared or layered
-
 ── RIFLING WEAR ──
 - Look for: rounded, smoothed, or diminished rifling lands and grooves
 - Reduced definition indicates wear
@@ -93,10 +79,13 @@ CRITICAL: Any brown, reddish-brown, orange-brown, rust-colored, or dark amber ar
 - May appear as a dark, light, or discolored circle — caused by impact, contamination, or localized damage
 - Check size carefully: a Spot is typically 1–10mm in diameter and has a clear boundary
 
-── BARREL OBSTRUCTION ──
-- Look for: foreign material partially or completely blocking the bore
-- Includes debris, mud, cleaning patches, or lodged projectiles
-- Any obstruction requires immediate attention
+── CUTS ──
+- Look for: sharp, well-defined incisions or gouges into the barrel surface metal
+- Cuts appear as distinct, clean-edged linear or curved wounds in the bore material
+- Deeper and more defined than scratches — cuts penetrate into the metal substrate, not just the surface coating
+- May appear as bright-edged grooves with clear depth and sharp sidewalls
+- Can be caused by improper cleaning tools, sharp foreign objects, or mechanical damage
+- Different from Scratch/Scoring: cuts are deeper and have sharper, cleaner edges with visible metal displacement
 
 ── RINGED BARREL ──
 - Look for: circular internal swelling around barrel circumference
@@ -113,10 +102,6 @@ CRITICAL: Any brown, reddish-brown, orange-brown, rust-colored, or dark amber ar
 ── CHROME LINING DAMAGE ──
 - Look for: peeling, cracking, flaking, or uneven chrome coating
 - Exposed substrate metal may be visible
-
-── CHAMBER DAMAGE ──
-- Look for: defects near the breech/chamber region
-- Includes deformation, erosion, scratches, or cracking
 
 ════════════════════════════════════════
 SEVERITY RULES
@@ -157,7 +142,7 @@ EROSION:
 - Medium: noticeable wear affecting 10–30% of visible surface
 - High: severe material degradation >30%
 
-CARBON FOULING / LEAD FOULING:
+CARBON FOULING:
 - Low: <10% visible surface affected
 - Medium: 10–30% visible surface affected
 - High: >30% surface affected
@@ -172,15 +157,10 @@ SPOT:
 - Medium: spot 3–7mm or multiple spots in same area
 - High: large spot >7mm or deep mark affecting surface integrity
 
-CARBON DEPOSIT:
-- Low: thin localized buildup <5% surface, no effect on bore dimensions
-- Medium: moderate hardened deposits 5–20% surface, minor bore restriction
-- High: heavy crusty accumulation >20% surface, measurable bore restriction
-
-BARREL OBSTRUCTION:
-- Low: partial obstruction <25% bore blockage
-- Medium: 25–75% bore blockage
-- High: >75% blockage or complete obstruction
+CUTS:
+- Low: single shallow cut <3mm length, no significant metal displacement
+- Medium: cut 3–10mm length or multiple shallow cuts, minor metal displacement visible
+- High: deep cut >10mm, multiple deep cuts, or cuts affecting bore geometry and structural integrity
 
 RINGED BARREL:
 - Low: minor ring deformation
@@ -202,11 +182,6 @@ CHROME LINING DAMAGE:
 - Medium: 5–25% lining loss
 - High: >25% lining loss
 
-CHAMBER DAMAGE:
-- Low: minor localized defect not affecting function
-- Medium: moderate damage with potential functional impact
-- High: severe structural compromise requiring immediate replacement
-
 ════════════════════════════════════════
 LOCATION IDENTIFICATION
 ════════════════════════════════════════
@@ -219,14 +194,13 @@ ANALYSIS METHODOLOGY
 2. Check color variations:
    - Brown/rust tones = Corrosion
    - Black/dark gray deposits = Carbon Fouling
-   - Thick raised black/gray crust = Carbon Deposit
-   - Gray/silver smearing = Lead Fouling
    - Localized dark spots without depression = Surface Spots or Spot (single mark)
 3. Check surface texture:
    - Holes/craters = Pitting
    - Linear grooves = Scratch/Scoring
    - Rough degraded surface = Erosion
    - Single or multiple fractures = Cracks
+   - Sharp clean-edged incisions into metal = Cuts
 4. Check profile and geometry:
    - Outward swelling = Bulge
    - Ring-like internal swelling = Ringed Barrel
@@ -235,8 +209,6 @@ ANALYSIS METHODOLOGY
    - Missing coating = Flecking Off
    - Chrome layer peeling = Chrome Lining Damage
 6. Check specific zones:
-   - Breech/chamber area = Chamber Damage
-   - Bore opening = Barrel Obstruction
    - Rifling lands and grooves = Rifling Wear
 7. A single image MAY have multiple defect types simultaneously — report ALL you detect
 8. Be thorough — missing a defect is more dangerous than being slightly conservative
@@ -276,7 +248,6 @@ Return ONLY valid JSON. No markdown. No explanation. No extra text. Exactly this
 }`;
 
 export async function POST(req: NextRequest) {
-  // ── Key guard — must be checked inside the handler, not at module level ──
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
@@ -296,7 +267,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey,                  // ← uses the guarded variable, never ""
+        "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
