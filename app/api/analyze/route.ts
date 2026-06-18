@@ -47,7 +47,7 @@ A) END-ON / MUZZLE VIEW: Camera is looking straight into the bore from the muzzl
    Visual cues: circular bore opening dominates the image, concentric rings visible, rifling spirals inward.
 
 B) SIDE / ENDOSCOPIC VIEW: Camera is inside the barrel looking along the bore axis.
-   Visual cues: rifling lands and grooves run lengthwise, cylindrical tunnel perspective.
+   Visual cues: rifling lands and grooves run lengthwise, cylindrical tunnel perspective, a lit circular area visible at the far end of the bore.
 
 The view type determines how each defect will appear. Apply the correct detection rules below.
 
@@ -117,10 +117,24 @@ SIDE VIEW: Brown/rust discoloration on lands, grooves, or bore walls.
 ──────────────────────────────────────
 4. FLECKING OFF
 ──────────────────────────────────────
-Definition: Peeling, chipping, or detachment of protective coating.
+Definition: Peeling, chipping, or detachment of the protective coating or lining from the metal substrate.
+
+⚠ PRIORITY RULE: If the dominant feature is coating/lining that is lifting, peeling, bubbling, or detaching —
+classify as Flecking Off FIRST. Do NOT classify as Chrome Lining Damage or Erosion if detachment is the
+primary visible feature.
 
 END-ON VIEW: Irregular bright or light patches where dark coating is absent on the muzzle face or bore edge.
-SIDE VIEW: Patchy areas where coating is lifting or absent along bore walls.
+Patchy areas where coating has chipped away leaving exposed base metal.
+
+SIDE VIEW — CRITICAL DETECTION RULE:
+In endoscopic/side view, Flecking Off appears as:
+  - White, cream, or light-coloured patches where the coating has lifted, bubbled, or separated from base metal
+  - Irregular shaped areas of delaminated or detached lining visible on the bore wall or at the lit far end
+  - Darker exposed patches surrounded by raised, curling, or broken coating edges
+  - A cracked, broken, or delaminated surface where coating pieces are actively detaching
+  - "Island" patterns of remaining coating surrounded by bare or differently coloured metal areas
+  - Any surface where layers appear to be coming apart or separating from the substrate beneath
+If the coating/lining is visibly lifting, peeling, bubbling, or detaching → MUST report as Flecking Off.
 
 ──────────────────────────────────────
 5. SURFACE SPOTS
@@ -133,18 +147,20 @@ SIDE VIEW: Spots distributed across the bore surface.
 ──────────────────────────────────────
 6. CRACKS
 ──────────────────────────────────────
-Definition: Linear fractures, splits, or fissures in the metal surface.
+Definition: Linear fractures, splits, or fissures in the metal or coating surface.
 
 END-ON VIEW: Visible as straight or branching dark lines radiating from the bore center, across the muzzle face, or along the inner bore wall.
-SIDE VIEW: Linear fractures running across or along the bore walls.
+SIDE VIEW: Linear fractures, branching black lines, or fissures running across or along the bore walls or coating surface.
+NOTE: Cracks often appear together with Flecking Off — if both are visible, report both independently.
 
 ──────────────────────────────────────
 7. EROSION
 ──────────────────────────────────────
-Definition: Gradual surface wear resulting in roughened, irregular texture.
+Definition: Gradual surface wear resulting in roughened, irregular texture of the base metal itself.
+NOTE: Erosion refers to wear of the underlying metal, NOT detachment of a coating layer (that is Flecking Off).
 
 END-ON VIEW: Roughened or irregular texture visible on the muzzle face or bore edge.
-SIDE VIEW: Roughened bore surface, loss of smooth finish on lands and grooves.
+SIDE VIEW: Roughened bore surface, loss of smooth finish on lands and grooves, pitted or worn base metal visible beneath removed coating.
 
 ──────────────────────────────────────
 8. CARBON FOULING
@@ -213,10 +229,11 @@ SIDE VIEW: Parallel grooves running lengthwise along the bore walls.
 ──────────────────────────────────────
 15. CHROME LINING DAMAGE
 ──────────────────────────────────────
-Definition: Peeling, cracking, flaking, or uneven chrome lining.
+Definition: Degradation of the chrome lining where it remains in place but is cracked, worn thin, or uneven — NOT detaching.
+NOTE: If the chrome/lining is actively peeling or detaching, classify as Flecking Off instead.
 
-END-ON VIEW: Patchy, irregular reflective surface on the bore interior — alternating bright and dull areas indicating chrome loss.
-SIDE VIEW: Irregular chrome patches, bright spots surrounded by dull areas.
+END-ON VIEW: Patchy, irregular reflective surface on the bore interior — alternating bright and dull areas indicating chrome thinning or wear while still attached.
+SIDE VIEW: Irregular chrome patches, bright spots surrounded by dull areas, worn-through chrome exposing base metal but lining still in place.
 
 ════════════════════════════════════════
 SEVERITY CLASSIFICATION RULES
@@ -239,8 +256,8 @@ CORROSION:
 
 FLECKING OFF:
 - Low: small isolated chips/flakes, <5% area
-- Medium: moderate coating loss, 5-25% area
-- High: extensive coating failure >25% area
+- Medium: moderate coating loss or delamination, 5-25% area
+- High: extensive coating detachment/peeling/delamination >25% area, large sections lifting or missing
 
 SURFACE SPOTS:
 - Low: 1-5 isolated spots, <5% surface
@@ -250,7 +267,7 @@ SURFACE SPOTS:
 CRACKS:
 - Low: single hairline crack <5mm
 - Medium: multiple cracks or 5-20mm length
-- High: structural cracks >20mm
+- High: structural cracks >20mm, deep branching network of cracks
 
 EROSION:
 - Low: minor surface roughness
@@ -293,9 +310,9 @@ SCRATCH/SCORING:
 - High: extensive scoring affecting functionality
 
 CHROME LINING DAMAGE:
-- Low: <5% lining loss
-- Medium: 5-25% lining loss
-- High: >25% lining loss
+- Low: <5% lining affected (worn/thinned but attached)
+- Medium: 5-25% lining worn or degraded while still attached
+- High: >25% lining severely worn, cracked in place, or structurally compromised
 
 ════════════════════════════════════════
 CONFIDENCE SCORES
@@ -346,39 +363,41 @@ FIELD DEFINITIONS FOR EACH ISSUE
 ════════════════════════════════════════
 ANALYSIS PROCESS (FOLLOW STRICTLY)
 ════════════════════════════════════════
-STEP 1: Identify image view type (END-ON or SIDE view)
+STEP 1: Identify image view type (END-ON or SIDE/ENDOSCOPIC view)
 STEP 2: Scan entire image systematically (top to bottom, left to right)
-STEP 3: CHECK BORE GEOMETRY FIRST (for end-on view):
-   - Is there a ring, band, or circular anomaly INSIDE the bore? → Bulge + Ringed Barrel
-   - Is the bore circle irregular, asymmetric, or non-circular? → Bulge or Dent
+STEP 3: CHECK BORE GEOMETRY FIRST:
+   END-ON: Is there a ring, band, or circular anomaly INSIDE the bore? → Bulge + Ringed Barrel
+   END-ON: Is the bore circle irregular, asymmetric, or non-circular? → Bulge or Dent
+   SIDE: Is there any coating lifting, peeling, bubbling, or detaching? → Flecking Off
 STEP 4: Check ALL color variations:
    - Brown/rust ANYWHERE → MUST report Corrosion
-   - Black/dark gray → Carbon Fouling
+   - Black/dark gray deposits → Carbon Fouling
    - Localized dark spots → Surface Spots or Spot
 STEP 5: Check ALL surface texture anomalies:
    - Holes/craters → Pitting
    - Linear grooves → Scratch/Scoring
-   - Rough areas → Erosion
-   - Fractures/lines → Cracks
-   - Sharp incisions → Cuts
+   - Rough base metal → Erosion
+   - Fractures/branching lines → Cracks
+   - Sharp clean incisions → Cuts
 STEP 6: Check coating integrity:
-   - Missing/patchy coating → Flecking Off
-   - Irregular chrome → Chrome Lining Damage
+   - Coating lifting, peeling, detaching → Flecking Off (PRIORITY)
+   - Coating worn/thinned but still attached → Chrome Lining Damage
 STEP 7: Check rifling definition:
    - Worn/indistinct rifling → Rifling Wear
-STEP 8: For EACH defect found, create a complete issue object
+STEP 8: For EACH defect found, create a complete issue object with ALL fields
 STEP 9: If NO defects found, return empty issues array
 
 ════════════════════════════════════════
 CRITICAL REMINDERS
 ════════════════════════════════════════
 - In END-ON view, a bulge/ringed barrel appears as a RING INSIDE THE BORE — not as swelling
+- In SIDE view, peeling/lifting/bubbling coating = Flecking Off — NOT Chrome Lining Damage or Erosion
+- Flecking Off and Cracks frequently appear together — always report both if both are visible
 - Brown/rust coloring ALWAYS equals Corrosion — never confuse with lighting
 - Missing a defect is more dangerous than over-reporting
 - Multiple defect types can exist in one image — report ALL
 - Each issue must have ALL fields populated (no nulls or empty strings)
 - Confidence must be realistic — do not inflate
-- Cracks visible as lines in end-on view MUST be reported
 
 ════════════════════════════════════════
 OUTPUT FORMAT (STRICT JSON - NO MARKDOWN)
