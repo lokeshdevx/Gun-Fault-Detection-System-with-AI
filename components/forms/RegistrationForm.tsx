@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import {
   Target, AlertCircle, ArrowRight, User, FileText,
   Crosshair, CalendarClock, Sliders, CheckCircle2,
+  Shield, BadgeCheck, Sparkles,
 } from "lucide-react";
 import { useSessionStore } from "@/lib/store/sessionStore";
 import { saveRegistration } from "@/lib/db/database";
@@ -37,10 +38,10 @@ const CALIBER_LABELS: Record<string, string> = {
 };
 
 const QUALITY_HINTS = [
-  "Blur detection",
-  "Brightness check",
-  "Sharpness validation",
-  "Exposure analysis",
+  { icon: Shield, label: "Blur detection" },
+  { icon: BadgeCheck, label: "Brightness check" },
+  { icon: Sparkles, label: "Sharpness validation" },
+  { icon: Shield, label: "Exposure analysis" },
 ];
 
 function SectionHeader({
@@ -51,12 +52,14 @@ function SectionHeader({
   label: string;
 }) {
   return (
-    <div className="flex items-center gap-2 mb-3">
-      <Icon className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
-      <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-[0.1em]">
+    <div className="flex items-center gap-2.5 mb-4">
+      <div className="p-1 rounded-md bg-gradient-to-br from-gray-100 to-gray-200">
+        <Icon className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
+      </div>
+      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.15em]">
         {label}
       </span>
-      <div className="flex-1 h-px bg-gray-200" />
+      <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent" />
     </div>
   );
 }
@@ -70,7 +73,7 @@ function FieldError({ message }: { message?: string }) {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="flex items-center gap-1 text-[11px] text-red-600"
+            className="flex items-center gap-1.5 text-[11px] text-red-600 font-medium"
           >
             <AlertCircle className="w-3 h-3 flex-shrink-0" />
             {message}
@@ -92,10 +95,11 @@ export function RegistrationForm() {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, touchedFields },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { caliber: "5.56mm" },
+    mode: "onChange",
   });
 
   const caliber = watch("caliber");
@@ -119,8 +123,16 @@ export function RegistrationForm() {
     }
   };
 
-  const inputClass =
-    "w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-500 focus:ring-2 focus:ring-gray-200 transition-all duration-150";
+  const getInputClass = (fieldName: keyof FormData) => {
+    const hasError = errors[fieldName];
+    const isTouched = touchedFields[fieldName];
+    return `w-full bg-white border rounded-lg px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 transition-all duration-200 focus:outline-none ${
+      hasError && isTouched
+        ? "border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+        : "border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-200 hover:border-gray-400"
+    }`;
+  };
+
   const labelClass =
     "block text-[11px] font-semibold text-gray-600 uppercase tracking-[0.07em] mb-1.5";
 
@@ -129,82 +141,105 @@ export function RegistrationForm() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="w-full max-w-2xl mx-auto"
+      className="w-full max-w-9xl mx-auto"
     >
       {/* ── Header ───────────────────────────────────── */}
-      <div className="flex items-center gap-4 mb-8 pb-6 border-b border-gray-200">
-        <div className="w-11 h-11 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
-          <Target className="w-5 h-5 text-gray-700" />
+      <motion.div 
+        className="flex items-center gap-4 mb-8 pb-6 border-b border-gray-200 p-2 sm:px-3 lg:px-4"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg flex items-center justify-center flex-shrink-0">
+          <Target className="w-5 h-5 text-white" />
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse" />
         </div>
         <div>
-          <h1 className="text-base font-semibold text-gray-900 leading-snug">
-            Inspection manifest
+          <h1 className="text-lg font-bold text-gray-900 leading-snug flex items-center gap-2">
+            Inspection Manifest
+            <span className="text-[10px] font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">v2.0</span>
           </h1>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+            <span className="inline-block w-1 h-1 bg-gray-300 rounded-full" />
             Complete all required fields to begin barrel fault detection
           </p>
         </div>
-      </div>
+      </motion.div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-7">
         {/* ── Weapon Identification ─────────────────── */}
-        <section>
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
           <SectionHeader icon={Crosshair} label="Weapon identification" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>
-                Gun name <span className="text-red-600">*</span>
+                Gun name <span className="text-red-500">*</span>
               </label>
               <input
                 {...register("gunName")}
-                className={inputClass}
+                className={getInputClass("gunName")}
                 placeholder="e.g. M4A1 Carbine"
               />
               <FieldError message={errors.gunName?.message} />
             </div>
             <div>
               <label className={labelClass}>
-                Batch number <span className="text-red-600">*</span>
+                Batch number <span className="text-red-500">*</span>
               </label>
               <input
                 {...register("batchNumber")}
-                className={inputClass}
+                className={getInputClass("batchNumber")}
                 placeholder="e.g. BTH-2024-001"
               />
               <FieldError message={errors.batchNumber?.message} />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>
-                Barrel serial number <span className="text-red-600">*</span>
-              </label>
-              <input
-                {...register("barrelSerialNumber")}
-                className={inputClass}
-                placeholder="e.g. BSN-789456"
-              />
-              <FieldError message={errors.barrelSerialNumber?.message} />
-            </div>
+          <div className="mt-4">
+            <label className={labelClass}>
+              Barrel serial number <span className="text-red-500">*</span>
+            </label>
+            <input
+              {...register("barrelSerialNumber")}
+              className={getInputClass("barrelSerialNumber")}
+              placeholder="e.g. BSN-789456"
+            />
+            <FieldError message={errors.barrelSerialNumber?.message} />
           </div>
-        </section>
+        </motion.section>
 
         {/* ── Caliber Toggle ────────────────────────── */}
-        <section>
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
           <SectionHeader icon={Sliders} label="Caliber" />
-          <div className="grid grid-cols-5 gap-1.5">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {CALIBERS.map((cal) => (
               <button
                 key={cal}
                 type="button"
                 onClick={() => setValue("caliber", cal, { shouldValidate: true })}
-                className={`py-2 px-1 rounded-lg text-xs font-semibold border transition-all duration-150 ${
+                className={`relative py-2.5 px-1 rounded-lg text-xs font-semibold border transition-all duration-200 ${
                   caliber === cal
-                    ? "bg-gray-200 border-gray-400 text-gray-900"
-                    : "bg-white border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700"
+                    ? "bg-gray-800 border-gray-700 text-white shadow-md scale-[0.98]"
+                    : "bg-white border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800 hover:shadow-sm hover:scale-[0.98]"
                 }`}
               >
                 {CALIBER_LABELS[cal]}
+                {caliber === cal && (
+                  <motion.div
+                    layoutId="caliber-indicator"
+                    className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
               </button>
             ))}
           </div>
@@ -212,34 +247,39 @@ export function RegistrationForm() {
             {caliber === "Other" && (
               <motion.div
                 initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: "auto", marginTop: 10 }}
+                animate={{ opacity: 1, height: "auto", marginTop: 12 }}
                 exit={{ opacity: 0, height: 0, marginTop: 0 }}
                 style={{ overflow: "hidden" }}
               >
                 <label className={labelClass}>
-                  Specify caliber <span className="text-red-600">*</span>
+                  Specify caliber <span className="text-red-500">*</span>
                 </label>
                 <input
                   {...register("customCaliber")}
-                  className={inputClass}
+                  className={getInputClass("customCaliber")}
                   placeholder="e.g. .308 Winchester"
                 />
+                <FieldError message={errors.customCaliber?.message} />
               </motion.div>
             )}
           </AnimatePresence>
-        </section>
+        </motion.section>
 
         {/* ── Inspector Details ─────────────────────── */}
-        <section>
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+        >
           <SectionHeader icon={User} label="Inspector details" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>
-                Inspector name <span className="text-red-600">*</span>
+                Inspector name <span className="text-red-500">*</span>
               </label>
               <input
                 {...register("inspectorName")}
-                className={inputClass}
+                className={getInputClass("inspectorName")}
                 placeholder="Full name"
               />
               <FieldError message={errors.inspectorName?.message} />
@@ -248,43 +288,55 @@ export function RegistrationForm() {
               <label className={labelClass}>Unit / Department</label>
               <input
                 {...register("unitDepartment")}
-                className={inputClass}
+                className={getInputClass("unitDepartment")}
                 placeholder="e.g. Armory Division"
               />
               <div className="min-h-[18px]" />
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* ── Notes ────────────────────────────────── */}
-        <section>
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
           <SectionHeader icon={FileText} label="Pre-inspection notes" />
           <textarea
             {...register("inspectionNotes")}
             rows={3}
-            className={`${inputClass} resize-none`}
+            className={`${getInputClass("inspectionNotes")} resize-none`}
             placeholder="Any pre-inspection observations, known issues, or context…"
           />
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {QUALITY_HINTS.map((hint) => (
-              <span
-                key={hint}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 border border-gray-200 text-[10px] text-gray-600"
+          <div className="flex flex-wrap gap-2 mt-3">
+            {QUALITY_HINTS.map(({ icon: Icon, label }) => (
+              <motion.span
+                key={label}
+                whileHover={{ scale: 1.05 }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 text-[10px] font-medium text-gray-600 shadow-sm"
               >
-                <CheckCircle2 className="w-2.5 h-2.5 text-gray-600" />
-                {hint}
-              </span>
+                <Icon className="w-3 h-3 text-gray-500" />
+                {label}
+              </motion.span>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* ── Date bar ─────────────────────────────── */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 flex items-center justify-between">
-          <span className="flex items-center gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-[0.08em]">
-            <CalendarClock className="w-3.5 h-3.5" />
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-xl px-4 py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 shadow-sm"
+        >
+          <span className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-[0.08em]">
+            <div className="p-1 rounded-md bg-white border border-gray-200">
+              <CalendarClock className="w-3.5 h-3.5 text-gray-600" />
+            </div>
             Inspection date
           </span>
-          <span className="text-xs font-medium text-gray-700 font-mono">
+          <span className="text-xs font-mono font-semibold text-gray-700 bg-white px-3 py-1.5 rounded-lg border border-gray-200 w-full sm:w-auto text-center">
             {new Date().toLocaleString("en-US", {
               month: "short",
               day: "numeric",
@@ -293,21 +345,35 @@ export function RegistrationForm() {
               minute: "2-digit",
             })}
           </span>
-        </div>
+        </motion.div>
 
         {/* ── Submit ───────────────────────────────── */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white text-sm font-semibold hover:bg-gray-700 hover:border-gray-600 disabled:opacity-40 transition-all duration-200"
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
         >
-          {loading ? (
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          ) : (
-            <ArrowRight className="w-4 h-4" />
-          )}
-          {loading ? "Starting session…" : "Continue to inspection"}
-        </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="group relative w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-700 text-white text-sm font-semibold hover:from-gray-700 hover:to-gray-800 hover:shadow-lg hover:shadow-gray-200/50 disabled:opacity-50 disabled:hover:shadow-none transition-all duration-300 overflow-hidden"
+          >
+            {loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Starting session…</span>
+              </>
+            ) : (
+              <>
+                <span>Continue to inspection</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
+          </button>
+          <p className="text-center text-[10px] text-gray-400 mt-3">
+            By continuing, you agree to our inspection terms and conditions
+          </p>
+        </motion.div>
       </form>
     </motion.div>
   );

@@ -6,17 +6,26 @@ import { DashboardNav } from "@/components/layout/DashboardNav";
 import { CameraPanel } from "@/components/camera/CameraPanel";
 import { AnalysisControls } from "@/components/analysis/AnalysisControls";
 import { ImageGrid } from "@/components/analysis/ImageGrid";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  ChevronRight, 
+  Camera, 
+  SlidersHorizontal, 
+  Images, 
+  Activity,
+  CircleDot,
+  AlertCircle,
+  Loader2
+} from "lucide-react";
 
 export default function DashboardPage() {
-  const { registration, sessionId } = useSessionStore();
+  const { registration, sessionId, images, isAnalyzing } = useSessionStore();
   const router = useRouter();
-
-  // Prevent a flash of dashboard content for unauthenticated users while the
-  // redirect effect is pending.
   const [checking, setChecking] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     if (!registration || !sessionId) {
       router.replace("/");
     } else {
@@ -24,139 +33,210 @@ export default function DashboardPage() {
     }
   }, [registration, sessionId, router]);
 
-  if (checking || !registration) return null;
+  if (!isClient || checking || !registration) return null;
 
-  // Derive caliber display value once — avoids repeating the ternary in JSX.
   const caliberDisplay =
     registration.caliber === "Other"
       ? registration.customCaliber
       : registration.caliber;
 
   const sessionFields = [
-    { label: "Gun",      value: registration.gunName },
-    { label: "Batch",    value: registration.batchNumber },
-    { label: "Serial",   value: registration.barrelSerialNumber },
-    { label: "Caliber",  value: caliberDisplay },
-    { label: "Inspector",value: registration.inspectorName },
+    { label: "Gun", value: registration.gunName, icon: null },
+    { label: "Batch", value: registration.batchNumber, icon: null },
+    { label: "Serial", value: registration.barrelSerialNumber, icon: null },
+    { label: "Caliber", value: caliberDisplay, icon: null },
+    { label: "Inspector", value: registration.inspectorName, icon: null },
   ];
 
+  const stats = {
+    total: images.length,
+    pending: images.filter(i => i.status === "pending").length,
+    analyzed: images.filter(i => i.status === "completed").length,
+    hasImages: images.length > 0,
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex flex-col">
       <DashboardNav />
 
-      {/* Session info bar */}
-      <div className="bg-white border-b border-gray-200 px-3 sm:px-4 py-2 flex flex-wrap items-center gap-2 sm:gap-4">
-        {sessionFields.map(({ label, value }) => (
-          <div key={label} className="flex items-center gap-1.5">
-            <span className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">
-              {label}:
-            </span>
-            <span className="text-[10px] sm:text-xs font-semibold text-gray-700 truncate max-w-[100px] sm:max-w-none">
-              {value}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/*
-        ─── LAYOUT STRATEGY ──────────────────────────────────────────────────────
-        The original code rendered CameraPanel, AnalysisControls, and ImageGrid
-        THREE times — once per breakpoint block. This caused:
-          • Three simultaneous camera streams fighting over the same hardware.
-          • ImageGrid mounted three times, creating triple store subscriptions
-            and conflicting state updates — the primary reason images didn't load.
-
-        FIX: each component is rendered exactly ONCE. Layout is handled entirely
-        with responsive CSS classes on the shared wrapper elements so the DOM
-        tree adapts without duplicating any component instances.
-
-        Breakpoint map:
-          Mobile  (<md)  → single column, stacked vertically
-          Tablet  (md)   → 2-column grid: [Camera + Controls] | [ImageGrid]
-          Desktop (lg+)  → 3-column flex: 50% Camera | 20% Controls | 30% ImageGrid
-      ─────────────────────────────────────────────────────────────────────────── */}
-      <div className="flex-1 p-3 sm:p-4 min-h-0">
-
-        {/*
-          Outer container switches layout mode per breakpoint.
-          flex-col  → mobile stack
-          md:grid   → 2-column tablet grid
-          lg:flex lg:flex-row → 3-column desktop flex
-        */}
-        <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:flex lg:flex-row lg:gap-4 min-h-0">
-
-          {/* ── Camera panel ──────────────────────────────────────────────────
-              Mobile/tablet: full width (col-span-1).
-              Desktop: 50% of the row.
-          ──────────────────────────────────────────────────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm
-                       md:col-span-1 lg:w-[50%] lg:overflow-y-auto"
+      {/* Session info bar - improved */}
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/80 backdrop-blur-sm border-b border-gray-200/80 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3"
+      >
+        <div className="flex flex-wrap items-center gap-3 sm:gap-5">
+          {sessionFields.map(({ label, value }, index) => (
+            <motion.div
+              key={label}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="flex items-center gap-2"
+            >
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                {label}:
+              </span>
+              <span className="text-xs font-medium text-gray-700 truncate max-w-[80px] sm:max-w-[120px] lg:max-w-none">
+                {value}
+              </span>
+              {index < sessionFields.length - 1 && (
+                <span className="hidden sm:inline text-gray-300">|</span>
+              )}
+            </motion.div>
+          ))}
+        </div>
+        
+        {/* Session stats - new */}
+        {stats.hasImages && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center gap-3 text-xs"
           >
-            <SectionHeader color="bg-gray-700" title="Camera" />
-            <CameraPanel />
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 border border-gray-200">
+              <CircleDot className="w-3 h-3 text-gray-500" />
+              <span className="font-medium text-gray-600">{stats.total}</span>
+              <span className="text-gray-400">total</span>
+            </div>
+            {stats.pending > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200">
+                <Loader2 className="w-3 h-3 text-amber-500 animate-spin" />
+                <span className="font-medium text-amber-600">{stats.pending}</span>
+                <span className="text-amber-500">pending</span>
+              </div>
+            )}
+            {stats.analyzed > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 border border-green-200">
+                <Activity className="w-3 h-3 text-green-500" />
+                <span className="font-medium text-green-600">{stats.analyzed}</span>
+                <span className="text-green-500">analyzed</span>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </motion.div>
+
+      {/* Main content */}
+      <div className="flex-1 p-3 sm:p-4 lg:p-6 min-h-0">
+        <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:flex lg:flex-row lg:gap-5 min-h-0 h-full">
+
+          {/* Camera panel - improved */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+            className="bg-white border border-gray-200/80 rounded-2xl shadow-lg shadow-gray-200/30 overflow-hidden
+                       md:col-span-1 lg:w-[50%] flex flex-col"
+          >
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-gray-700 to-gray-800">
+                  <Camera className="w-3.5 h-3.5 text-white" />
+                </div>
+                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-widest">
+                  Camera
+                </h2>
+              </div>
+              <span className="flex items-center gap-1.5 text-[10px] text-green-600 font-medium">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                Live
+              </span>
+            </div>
+            <div className="flex-1 p-4">
+              <CameraPanel />
+            </div>
           </motion.div>
 
-          {/* ── Controls panel ────────────────────────────────────────────────
-              Mobile: sits between Camera and ImageGrid (natural stack order).
-              Tablet: shares left column with Camera — achieved by wrapping
-                      Camera + Controls in a sub-grid column on md.
-              Desktop: 20% centre column.
-
-              We handle the tablet "left column" stacking by placing Controls
-              right after Camera in source order and using md:col-start-1 so
-              it flows into the first column on a 2-col grid automatically.
-              ImageGrid uses md:col-start-2 md:row-span-2 to fill the right.
-          ──────────────────────────────────────────────────────────────────── */}
+          {/* Controls panel - improved */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm
-                       md:col-start-1 lg:w-[20%] lg:overflow-y-auto"
+            transition={{ delay: 0.1, duration: 0.4 }}
+            className="bg-white border border-gray-200/80 rounded-2xl shadow-lg shadow-gray-200/30 overflow-hidden
+                       md:col-start-1 lg:w-[22%] flex flex-col"
           >
-            <SectionHeader color="bg-blue-500" title="Controls" />
-            <AnalysisControls />
+            <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-white" />
+              </div>
+              <h2 className="text-xs font-bold text-gray-700 uppercase tracking-widest">
+                Controls
+              </h2>
+              {isAnalyzing && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="ml-auto"
+                >
+                  <span className="flex items-center gap-1.5 text-[10px] text-blue-600 font-medium">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Processing
+                  </span>
+                </motion.div>
+              )}
+            </div>
+            <div className="flex-1 p-4 overflow-y-auto">
+              <AnalysisControls />
+            </div>
           </motion.div>
 
-          {/* ── ImageGrid panel ───────────────────────────────────────────────
-              Mobile: full width, below Controls.
-              Tablet: right column, spans both rows so it fills the full height
-                      alongside Camera (row 1) and Controls (row 2).
-              Desktop: 30% right column with overflow scrolling inside.
-          ──────────────────────────────────────────────────────────────────── */}
+          {/* ImageGrid panel - improved */}
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm
-                       flex flex-col min-h-[400px]
+            transition={{ delay: 0.2, duration: 0.4 }}
+            className="bg-white border border-gray-200/80 rounded-2xl shadow-lg shadow-gray-200/30 overflow-hidden
+                       flex flex-col min-h-[400px] md:min-h-[500px]
                        md:col-start-2 md:row-start-1 md:row-span-2
-                       lg:w-[30%] lg:overflow-hidden"
+                       lg:w-[28%]"
           >
-            <SectionHeader color="bg-orange-500" title="Images & Results" />
-            <div className="flex-1 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-white">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-600 to-orange-700">
+                  <Images className="w-3.5 h-3.5 text-white" />
+                </div>
+                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-widest">
+                  Images & Results
+                </h2>
+              </div>
+              {stats.hasImages && (
+                <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                  {stats.total}
+                </span>
+              )}
+            </div>
+            <div className="flex-1 p-4 overflow-hidden">
               <ImageGrid />
             </div>
           </motion.div>
 
         </div>
       </div>
-    </div>
-  );
-}
 
-// ─── Small presentational helper ─────────────────────────────────────────────
-// Extracted to avoid repeating the same markup three times.
-function SectionHeader({ color, title }: { color: string; title: string }) {
-  return (
-    <div className="flex items-center gap-2 mb-4">
-      <div className={`w-1.5 h-4 ${color} rounded-full`} />
-      <h2 className="text-xs font-bold text-gray-600 uppercase tracking-widest">
-        {title}
-      </h2>
+      {/* Mobile bottom bar - visible only on small screens */}
+      <div className="lg:hidden bg-white border-t border-gray-200 px-4 py-2 flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center gap-2">
+          <Activity className="w-3.5 h-3.5 text-gray-400" />
+          <span>{stats.total} images</span>
+        </div>
+        <div className="flex items-center gap-3">
+          {stats.pending > 0 && (
+            <span className="text-amber-600 font-medium">{stats.pending} pending</span>
+          )}
+          {stats.analyzed > 0 && (
+            <span className="text-green-600 font-medium">{stats.analyzed} analyzed</span>
+          )}
+          <span className="w-px h-4 bg-gray-300" />
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+            Online
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
